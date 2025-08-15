@@ -26,9 +26,6 @@ app.post("/chat", async (req, res) => {
     conversation.push({ role: "user", content: message });
     if (conversation.length > 15) conversation = conversation.slice(-15);
 
-    // Fix modell
-    const model = "mistral-7b-instruct-v0.1";
-
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -36,7 +33,7 @@ app.post("/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model,
+        model: "mistral-small-3.1-instruct", // FIX modell
         messages: conversation,
       }),
     });
