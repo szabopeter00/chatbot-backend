@@ -1,0 +1,14 @@
+{
+  "name": "Szabó Péter",
+  "favoriteColors": {
+    "general": "Az attól függ miről van szó",
+    "apple": "zöld",
+    "paint": "éget kék",
+    "clothes": "sötét árnyalatok"
+  },
+  "workPreferences": {
+    "salaryFocus": false,
+    "salaryRange": "300-500 ezer forint nettó",
+    "mainPriority": "fejlődés és szakmai tapasztalat"
+  }
+}
