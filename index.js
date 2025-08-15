@@ -18,18 +18,25 @@ if (!API_KEY) {
 // Egyszerű emlékezet
 let conversation = [];
 
+// Dinamikus modell ellenőrzés
+async function getFirstAvailableModel() {
+  const res = await fetch("https://api.mistral.ai/v1/models", {
+    headers: { Authorization: `Bearer ${API_KEY}` },
+  });
+  const data = await res.json();
+  return data.data?.[0]?.id; // visszaadja az első elérhető modellt
+}
+
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
-
-    if (!message) {
-      return res.status(400).json({ error: "Message missing" });
-    }
+    if (!message) return res.status(400).json({ error: "Message missing" });
 
     conversation.push({ role: "user", content: message });
-    if (conversation.length > 15) {
-      conversation = conversation.slice(-15);
-    }
+    if (conversation.length > 15) conversation = conversation.slice(-15);
+
+    const model = await getFirstAvailableModel();
+    if (!model) return res.status(500).json({ error: "Nincs elérhető modell" });
 
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",
@@ -38,7 +45,7 @@ app.post("/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mistral-7b-v0.1", // Frissített modell
+        model,
         messages: conversation,
       }),
     });
@@ -50,15 +57,11 @@ app.post("/chat", async (req, res) => {
     }
 
     const data = await response.json();
-
-    // Mistral új formátuma
     const botMessage = data.result?.[0]?.content?.[0]?.text;
-    if (!botMessage) {
+    if (!botMessage)
       return res.status(500).json({ error: "Érvénytelen API válasz" });
-    }
 
     conversation.push({ role: "assistant", content: botMessage });
-
     res.json({ reply: botMessage });
   } catch (error) {
     console.error("Hiba a chat endpointban:", error);
