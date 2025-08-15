@@ -15,7 +15,7 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-// Emlékezet (minden felhasználóra külön ID kellene a valódi verzióban)
+// Egyszerű emlékezet
 let conversation = [];
 
 app.post("/chat", async (req, res) => {
@@ -26,10 +26,7 @@ app.post("/chat", async (req, res) => {
       return res.status(400).json({ error: "Message missing" });
     }
 
-    // Hozzáadjuk az új üzenetet a beszélgetéshez
     conversation.push({ role: "user", content: message });
-
-    // Csak az utolsó 15 üzenetet tartjuk meg
     if (conversation.length > 15) {
       conversation = conversation.slice(-15);
     }
@@ -41,7 +38,7 @@ app.post("/chat", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mistral-7b-instruct",
+        model: "mistral-7b-v0.1", // Frissített modell
         messages: conversation,
       }),
     });
@@ -54,14 +51,12 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
 
-    // Ellenőrizzük, hogy van-e choices tömb
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    // Mistral új formátuma
+    const botMessage = data.result?.[0]?.content?.[0]?.text;
+    if (!botMessage) {
       return res.status(500).json({ error: "Érvénytelen API válasz" });
     }
 
-    const botMessage = data.choices[0].message.content;
-
-    // Bot válaszát is mentjük a memóriába
     conversation.push({ role: "assistant", content: botMessage });
 
     res.json({ reply: botMessage });
