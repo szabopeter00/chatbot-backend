@@ -9,9 +9,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const API_KEY = process.env.MISTRAL_API_KEY;
+const API_KEY = process.env.OPENAI_API_KEY;
 if (!API_KEY) {
-  console.error("❌ Nincs beállítva MISTRAL_API_KEY a .env fájlban!");
+  console.error("❌ Nincs beállítva OPENAI_API_KEY a .env fájlban!");
   process.exit(1);
 }
 
@@ -26,26 +26,21 @@ app.post("/chat", async (req, res) => {
     conversation.push({ role: "user", content: message });
     if (conversation.length > 15) conversation = conversation.slice(-15);
 
-    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mistral-small-3.1-instruct", // FIX modell
+        model: "gpt-3.5-turbo", // ingyenesen használható modell
         messages: conversation,
       }),
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Mistral API hiba:", text);
-      return res.status(500).json({ error: "Hiba a Mistral API hívásakor" });
-    }
-
     const data = await response.json();
-    const botMessage = data.result?.[0]?.content?.[0]?.text;
+    const botMessage = data.choices?.[0]?.message?.content;
+
     if (!botMessage)
       return res.status(500).json({ error: "Érvénytelen API válasz" });
 
