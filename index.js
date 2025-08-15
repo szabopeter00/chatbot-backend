@@ -18,15 +18,6 @@ if (!API_KEY) {
 // Egyszerű emlékezet
 let conversation = [];
 
-// Dinamikus modell ellenőrzés
-async function getFirstAvailableModel() {
-  const res = await fetch("https://api.mistral.ai/v1/models", {
-    headers: { Authorization: `Bearer ${API_KEY}` },
-  });
-  const data = await res.json();
-  return data.data?.[0]?.id; // visszaadja az első elérhető modellt
-}
-
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
@@ -35,8 +26,8 @@ app.post("/chat", async (req, res) => {
     conversation.push({ role: "user", content: message });
     if (conversation.length > 15) conversation = conversation.slice(-15);
 
-    const model = await getFirstAvailableModel();
-    if (!model) return res.status(500).json({ error: "Nincs elérhető modell" });
+    // Fix modell
+    const model = "mistral-7b-instruct-v0.1";
 
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",
