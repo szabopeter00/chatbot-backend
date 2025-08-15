@@ -22,6 +22,10 @@ app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
 
+    if (!message) {
+      return res.status(400).json({ error: "Message missing" });
+    }
+
     // Hozzáadjuk az új üzenetet a beszélgetéshez
     conversation.push({ role: "user", content: message });
 
@@ -42,7 +46,19 @@ app.post("/chat", async (req, res) => {
       }),
     });
 
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("Mistral API hiba:", text);
+      return res.status(500).json({ error: "Hiba a Mistral API hívásakor" });
+    }
+
     const data = await response.json();
+
+    // Ellenőrizzük, hogy van-e choices tömb
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      return res.status(500).json({ error: "Érvénytelen API válasz" });
+    }
+
     const botMessage = data.choices[0].message.content;
 
     // Bot válaszát is mentjük a memóriába
@@ -50,8 +66,8 @@ app.post("/chat", async (req, res) => {
 
     res.json({ reply: botMessage });
   } catch (error) {
-    console.error("Hiba a Mistral API hívás közben:", error);
-    res.status(500).json({ error: "Hiba történt a Mistral API hívásakor" });
+    console.error("Hiba a chat endpointban:", error);
+    res.status(500).json({ error: "Hiba történt a szerver oldalon" });
   }
 });
 
