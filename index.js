@@ -16,8 +16,7 @@ if (!HF_API_KEY) {
 }
 
 // Használt modell URL-je
-const HF_API_URL =
-  "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta";
+const HF_API_URL = "https://api-inference.huggingface.co/models/gpt2";
 
 // Egyszerű emlékezet
 let conversation = [];
