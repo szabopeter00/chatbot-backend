@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import fetch from "node-fetch"; // Node 18 alatt kell, 18+ esetén beépített
+import fetch from "node-fetch";
 
 dotenv.config();
 
@@ -15,7 +15,7 @@ if (!HF_API_KEY) {
   process.exit(1);
 }
 
-// Használt modell URL-je (bármely Hugging Face modell lehet, pl. Zephyr)
+// Használt modell URL-je
 const HF_API_URL =
   "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta";
 
@@ -31,7 +31,7 @@ app.post("/chat", async (req, res) => {
     conversation.push({ role: "user", content: message });
     if (conversation.length > 15) conversation = conversation.slice(-15);
 
-    // A Hugging Face nem ismeri a role-t -> kontextust egy szövegbe fűzzük
+    // Kontextus összeállítása promptba
     const prompt =
       conversation
         .map((msg) =>
@@ -53,19 +53,28 @@ app.post("/chat", async (req, res) => {
         parameters: {
           max_new_tokens: 200,
           temperature: 0.7,
+          return_full_text: false, // csak az új szöveg
         },
       }),
     });
 
     const data = await response.json();
 
+    // Ellenőrzés hibára
     if (data.error) {
       console.error("HF API hiba:", data.error);
       return res.status(500).json({ error: data.error });
     }
 
-    const botMessage =
-      data[0]?.generated_text?.replace(prompt, "").trim() || "Nincs válasz";
+    // Bot üzenet kinyerése (biztonságosabb)
+    let botMessage = "";
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      botMessage = data[0].generated_text.trim();
+    } else if (typeof data.generated_text === "string") {
+      botMessage = data.generated_text.trim();
+    } else {
+      botMessage = "Nincs válasz";
+    }
 
     // Bot üzenet mentése
     conversation.push({ role: "assistant", content: botMessage });
