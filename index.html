@@ -28,5 +28,40 @@
         input.value = "";
       }
     </script>
+    <script>
+      async function sendMessage() {
+        const input = document.getElementById("userInput");
+        const chatDiv = document.getElementById("chat");
+
+        try {
+          const res = await fetch("http://localhost:3000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: input.value }),
+          });
+
+          if (!res.ok) {
+            throw new Error("Hiba a szerveren: " + res.status);
+          }
+
+          const data = await res.json();
+
+          chatDiv.innerHTML += `<p><b>Te:</b> ${input.value}</p>`;
+          chatDiv.innerHTML += `<p><b>Bot:</b> ${data.reply}</p>`;
+          input.value = "";
+        } catch (err) {
+          chatDiv.innerHTML += `<p style="color:red"><b>Hiba:</b> ${err.message}</p>`;
+        }
+      }
+    </script>
+    <script>
+      document
+        .getElementById("userInput")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            sendMessage();
+          }
+        });
+    </script>
   </body>
 </html>
