@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Chatbot</title>
+    <style>
+      #chat p {
+        margin: 5px 0;
+      }
+      #chat {
+        border: 1px solid #ccc;
+        padding: 10px;
+        max-width: 500px;
+        height: 300px;
+        overflow-y: auto;
+      }
+    </style>
   </head>
   <body>
     <input id="userInput" type="text" placeholder="Írj üzenetet..." />
@@ -11,27 +23,14 @@
     <div id="chat"></div>
 
     <script>
+      const chatDiv = document.getElementById("chat");
+      const input = document.getElementById("userInput");
+
       async function sendMessage() {
-        const input = document.getElementById("userInput");
-        const chatDiv = document.getElementById("chat");
+        if (!input.value.trim()) return; // üres üzenet figyelése
 
-        const res = await fetch("http://localhost:3000/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input.value }),
-        });
-
-        const data = await res.json();
-
+        // Felhasználó üzenete
         chatDiv.innerHTML += `<p><b>Te:</b> ${input.value}</p>`;
-        chatDiv.innerHTML += `<p><b>Bot:</b> ${data.reply}</p>`;
-        input.value = "";
-      }
-    </script>
-    <script>
-      async function sendMessage() {
-        const input = document.getElementById("userInput");
-        const chatDiv = document.getElementById("chat");
 
         try {
           const res = await fetch("http://localhost:3000/chat", {
@@ -40,28 +39,22 @@
             body: JSON.stringify({ message: input.value }),
           });
 
-          if (!res.ok) {
-            throw new Error("Hiba a szerveren: " + res.status);
-          }
+          if (!res.ok) throw new Error("Hiba a szerveren: " + res.status);
 
           const data = await res.json();
 
-          chatDiv.innerHTML += `<p><b>Te:</b> ${input.value}</p>`;
           chatDiv.innerHTML += `<p><b>Bot:</b> ${data.reply}</p>`;
+          chatDiv.scrollTop = chatDiv.scrollHeight; // görgetés az aljára
           input.value = "";
         } catch (err) {
           chatDiv.innerHTML += `<p style="color:red"><b>Hiba:</b> ${err.message}</p>`;
         }
       }
-    </script>
-    <script>
-      document
-        .getElementById("userInput")
-        .addEventListener("keypress", function (e) {
-          if (e.key === "Enter") {
-            sendMessage();
-          }
-        });
+
+      // Enter lenyomás figyelése
+      input.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") sendMessage();
+      });
     </script>
   </body>
 </html>
