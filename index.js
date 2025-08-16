@@ -52,20 +52,30 @@ app.post("/chat", async (req, res) => {
         parameters: {
           max_new_tokens: 200,
           temperature: 0.7,
-          return_full_text: false, // csak az új szöveg
+          return_full_text: false,
         },
       }),
     });
 
-    const data = await response.json();
+    // Válasz szövegként
+    const text = await response.text();
 
-    // Ellenőrzés hibára
+    // Próbáljuk JSON-ként értelmezni
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error("Nem JSON választ kaptunk a HF API-tól:", text);
+      return res.status(500).json({ error: text });
+    }
+
+    // Ellenőrzés, hogy van-e hiba a HF API válaszában
     if (data.error) {
       console.error("HF API hiba:", data.error);
       return res.status(500).json({ error: data.error });
     }
 
-    // Bot üzenet kinyerése (biztonságosabb)
+    // Bot üzenet kinyerése
     let botMessage = "";
     if (Array.isArray(data) && data[0]?.generated_text) {
       botMessage = data[0].generated_text.trim();
